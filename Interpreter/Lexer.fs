@@ -9,6 +9,8 @@ type Token =
     | Asterisk
     | Slash
     | Eof
+    | OpeningParenthesis
+    | ClosingParenthesis
 
 let isEof =
     function
@@ -37,6 +39,13 @@ type Tokens(tokens: Token []) =
 
     member this.Advance = index <- index + 1
 
+    member this.ConsumeUntil(token: Token) =
+        let slice =
+            Array.skip index tokens
+            |> Array.takeWhile (fun a -> token = a)
+
+        index <- index + slice.Length
+        slice
 
 let rec private tokenize input =
     match input with
@@ -46,6 +55,8 @@ let rec private tokenize input =
     | '-' :: tail -> Minus :: tokenize tail
     | '*' :: tail -> Asterisk :: tokenize tail
     | '/' :: tail -> Slash :: tokenize tail
+    | '(' :: tail -> OpeningParenthesis :: tokenize tail
+    | ')' :: tail -> ClosingParenthesis :: tokenize tail
     | x :: tail when Char.IsDigit x ->
         let token =
             List.takeWhile Char.IsDigit (x :: tail)
