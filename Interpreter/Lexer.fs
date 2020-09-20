@@ -26,7 +26,14 @@ type Tokens(tokens: Token []) =
     let mutable index = 0
 
     member this.Peak =
-        if tokens.Length < index then tokens.[index] else Eof
+        if tokens.Length > index then tokens.[index] else Eof
+
+    member this.Consume =
+        if tokens.Length > index then
+            this.Advance
+            tokens.[index - 1]
+        else
+            Eof
 
     member this.Advance = index <- index + 1
 
@@ -48,7 +55,7 @@ let rec private tokenize input =
         token :: tokenize newInput
     | x :: _ -> failwith <| sprintf "Unmatching character %c" x
 
-let parseTokens (input: string) =
+let lex (input: string) =
     Seq.toList input
     |> tokenize
     |> Array.ofList
