@@ -4,7 +4,7 @@ open Lexer
 
 type Operation = Addition | Substraction | Multiplication | Division
 
-let toOperation token = 
+let toOperation (token: Token): Operation = 
     match token with 
     | Plus -> Addition
     | Minus -> Substraction
@@ -15,14 +15,18 @@ let toOperation token =
 type ASTree = 
     | Number of value: int * token : Token
     | BinOp of left : ASTree * operation: Operation * right : ASTree * token : Token 
+    // TODO: The re usage of the operation in here is bit questioable, but for now it is not an issue
+    | UnaryOp of operation: Operation * value : ASTree * token: Token
     
-let factor (tokens: Tokens) exprFunc =
+let rec factor (tokens: Tokens) exprFunc =
     let tok = tokens.Consume
     match tok with
     | Integer x -> Number(x, tok)
     | OpeningParenthesis ->
         let res = exprFunc tokens
         if ClosingParenthesis = tokens.Consume then res else failwith "Expected closing parenthesis"
+    | Plus -> UnaryOp(Addition, factor tokens exprFunc, tok)
+    | Minus -> UnaryOp(Substraction, factor tokens exprFunc, tok)
     | x -> failwith <| sprintf "Expected factor got %A" x
 
 let term (tokens: Tokens) exprFunc =
