@@ -65,6 +65,8 @@ let rec private tokenize input =
     | [] -> [ Eof ]
     | ' ' :: tail -> tokenize tail
     | '\n' :: tail -> tokenize tail
+    | '\r' :: tail -> tokenize tail
+    | '\t' :: tail -> tokenize tail
     | '+' :: tail -> Plus :: tokenize tail
     | '-' :: tail -> Minus :: tokenize tail
     | '*' :: tail -> Asterisk :: tokenize tail
