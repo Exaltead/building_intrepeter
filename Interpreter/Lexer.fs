@@ -11,17 +11,12 @@ type Token =
     | Eof
     | OpeningParenthesis
     | ClosingParenthesis
-
-let isEof =
-    function
-    | Eof -> false
-    | _ -> true
-
-let private parseInteger (input: char list) =
-    Array.ofList (input)
-    |> String.Concat
-    |> int
-    |> Integer
+    | Begin
+    | End
+    | Dot
+    | Id of value: string
+    | Assign
+    | Semicolon
 
 type Tokens(tokens: Token []) =
     do printfn "Tokens parsed: %A" tokens
@@ -36,7 +31,7 @@ type Tokens(tokens: Token []) =
             tokens.[index - 1]
         else
             Eof
-
+    
     member this.Advance = index <- index + 1
 
     member this.ConsumeUntil(token: Token) =
@@ -47,23 +42,44 @@ type Tokens(tokens: Token []) =
         index <- index + slice.Length
         slice
 
+let splitAt condition target = 
+    let index = List.findIndex (condition >> not) target
+    List.splitAt index target
+
+let private parseInteger (input: char list) =
+    Array.ofList (input)
+    |> String.Concat
+    |> int
+    |> Integer
+
+let private parseIdentifier (input: char list) =
+    let str = Array.ofList(input) |> String.Concat
+    match str with
+    | "BEGIN" -> Begin
+    | "END" -> End
+    | _ -> Id str 
+
+
 let rec private tokenize input =
     match input with
     | [] -> [ Eof ]
     | ' ' :: tail -> tokenize tail
+    | '\n' :: tail -> tokenize tail
     | '+' :: tail -> Plus :: tokenize tail
     | '-' :: tail -> Minus :: tokenize tail
     | '*' :: tail -> Asterisk :: tokenize tail
     | '/' :: tail -> Slash :: tokenize tail
     | '(' :: tail -> OpeningParenthesis :: tokenize tail
     | ')' :: tail -> ClosingParenthesis :: tokenize tail
+    | '.' :: tail -> Dot :: tokenize tail
+    | ';' :: tail -> Semicolon :: tokenize tail
+    | ':' :: '=' :: tail -> Assign :: tokenize tail 
     | x :: tail when Char.IsDigit x ->
-        let token =
-            List.takeWhile Char.IsDigit (x :: tail)
-            |> parseInteger
-
-        let newInput = List.skipWhile Char.IsDigit tail
-        token :: tokenize newInput
+        let (head, rest) = splitAt Char.IsDigit (x :: tail)
+        parseInteger head :: tokenize rest
+    | x :: tail when Char.IsLetter x -> 
+        let (head, rest) = splitAt Char.IsLetter (x :: tail)
+        parseIdentifier head :: tokenize rest
     | x :: _ -> failwith <| sprintf "Unmatching character %c" x
 
 let lex (input: string) =
