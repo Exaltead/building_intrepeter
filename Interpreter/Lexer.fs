@@ -17,6 +17,7 @@ type Token =
     | Id of value: string
     | Assign
     | Semicolon
+    | Div
 
 type Tokens(tokens: Token []) =
     do printfn "Tokens parsed: %A" tokens
@@ -53,12 +54,14 @@ let private parseInteger (input: char list) =
     |> Integer
 
 let private parseIdentifier (input: char list) =
-    let str = Array.ofList(input) |> String.Concat
+    let str = Array.ofList(input) |> Array.map Char.ToUpper |> String.Concat 
     match str with
     | "BEGIN" -> Begin
     | "END" -> End
+    | "DIV" -> Div
     | _ -> Id str 
 
+let IsLetterOrUndescore x = Char.IsLetter x || x = '_'
 
 let rec private tokenize input =
     match input with
@@ -79,8 +82,8 @@ let rec private tokenize input =
     | x :: tail when Char.IsDigit x ->
         let (head, rest) = splitAt Char.IsDigit (x :: tail)
         parseInteger head :: tokenize rest
-    | x :: tail when Char.IsLetter x -> 
-        let (head, rest) = splitAt Char.IsLetter (x :: tail)
+    | x :: tail when IsLetterOrUndescore x -> 
+        let (head, rest) = splitAt IsLetterOrUndescore (x :: tail)
         parseIdentifier head :: tokenize rest
     | x :: _ -> failwith <| sprintf "Unmatching character %c" x
 

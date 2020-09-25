@@ -15,6 +15,7 @@ let toOperation (token: Token): Operation =
     | Minus -> Substraction
     | Asterisk -> Multiplication
     | Slash -> Division
+    | Div -> Division 
     | _ -> failwith <| sprintf "Unmatching operator %A" token
 
 type ASTree = 
@@ -58,7 +59,7 @@ let rec factor (tokens: Tokens) exprFunc =
 let term (tokens: Tokens) exprFunc =
     let mutable current = factor tokens exprFunc
 
-    while Slash = tokens.Peak || Asterisk = tokens.Peak do
+    while Div = tokens.Peak || Asterisk = tokens.Peak do
         let op = tokens.Consume
         let right = factor tokens exprFunc
         current <- BinOp(current, (toOperation op), right, op) 
